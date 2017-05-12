@@ -1,0 +1,267 @@
+﻿<html>
+    <head>
+        <title>Hold'Em</title>
+        <meta http-equiv="x-ua-compatible" content="IE=10" /> 
+    </head>
+    <body>
+        <input id='btnStart' type='button' value='Start' onclick='Main()' />
+        <input id='btnFold' type='button' value='Fold' disabled='disabled' onclick='iChoice = 6; Main()' />
+        <input id='btnBet0' type='button' value='Check' disabled='disabled' onclick='iChoice = 0; Main()' /><br />
+        <input id='btnBet1' type='button' value='Bet Blind' disabled='disabled' onclick='iChoice = 1; Main()' />
+        <input id='btnBet2' type='button' value='Bet 2x Blind' disabled='disabled' onclick='iChoice = 2; Main()' />
+        <input id='btnBet3' type='button' value='Bet 3x Blind' disabled='disabled' onclick='iChoice = 3; Main()' /><br />
+        <input id='btnBet4' type='button' value='Bet 4x Blind' disabled='disabled' onclick='iChoice = 4; Main()' />
+        <input id='btnBet5' type='button' value='All In' disabled='disabled' onclick='iChoice = 5; Main()' />
+        <img id='imgCC0' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC1' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC2' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC3' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC4' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <p id='parPChips' style='position: absolute;'></p>
+        <img id='imgPC0' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+        <img id='imgPC1' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+        <p id='parC1Chips' style='position: absolute;'></p>
+        <img id='imgC1C0' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+        <img id='imgC1C1' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+        <p id='parResult' style='position: absolute;'></p>
+    </body>
+</html>
+<script language="vbscript" src="PokerHands.vbs"></script>
+<script language="vbscript" src="Betting.vbs"></script>
+<script language="vbscript">
+Option Explicit
+Dim sDeck
+Dim sSixCardCombos
+Dim sSevCardCombos
+Dim iPair(1)
+Dim sHighcard
+Dim iThreeOfAKind
+Dim bStraight
+Dim bFlush
+Dim iRound
+Dim iHandNum
+Dim sHandRes
+Dim iCheckVals(4)
+Dim sCheckSuits(4)
+Dim iCheckScore
+Dim sCheckHandDesc
+
+Dim sCCard(4)
+Dim sCSuit(4)
+Dim iCValue(4)
+Dim iChoice
+Dim iBlind
+Dim iPot
+Dim iAnte
+
+Dim iPBestScore
+Dim sPBestHandDesc
+Dim sPCard(1)
+Dim sPSuit(6)
+Dim iPValue(6)
+Dim iPChips
+Dim iPRoundBet
+
+Dim iC1BestScore
+Dim sC1BestHandDesc
+Dim sC1Card(1)
+Dim sC1Suit(6)
+Dim iC1Value(6)
+Dim iC1Chips
+Dim iC1RoundBet
+Dim bC1Fold
+
+    Sub window_Onload()
+        Randomize
+        Start
+    End Sub
+
+    Sub Start()
+        CreateCombinations
+        Initialise 15000
+        Interface
+    End Sub
+
+    Sub Main()
+        Dim Desc
+        If iChoice = 6 Then
+            Fold iC1Chips, "You fold the pot; Computer 1 wins."
+        Else
+            If iRound = 0 Or iRound = 5 Then
+                PreFlop
+            ElseIf iRound = 1 Then
+                Flop
+            ElseIf iRound = 2 Then
+                Turn
+            ElseIf iRound = 3 Then
+                River
+            ElseIf iRound = 4 Then
+                FinalBet
+            End If
+            If bC1Fold = False Then
+                iRound = iRound + 1
+            End If
+        End If
+    End Sub
+
+    Sub PreFlop()
+        Buttons "", "Disabled"
+        CommPreFlop
+        PlayerPreFlop
+        ComputerPreFlop
+        CalcBet 100, 12, 11, 10, 9
+        ShowPreFlop
+    End Sub
+
+    Sub CommPreFlop()
+        FreshDeck
+        FreshHand
+        CalcBlind
+        DrawCards
+    End Sub
+
+    Sub PlayerPreFlop()
+        SuitsAndValues iPValue, sPSuit, "imgPC", sPCard, 0, 1
+        Sort iPValue, sPSuit, sPCard, 0, True
+        SuitsAndValues iPValue, sPSuit, "imgPC", sPCard, 0, 1
+        CheckHand iPValue, sPSuit, 1, iPBestScore, sPBestHandDesc
+    End Sub
+
+    Sub ComputerPreFlop()
+        SuitsAndValues iC1Value, sC1Suit, "imgC1C", sC1Card, 0, 1
+        Sort iC1Value, sC1Suit, sC1Card, 0, True
+        SuitsAndValues iC1Value, sC1Suit, "imgC1C", sC1Card, 0, 1
+        CheckHand iC1Value, sC1Suit, 1, iC1BestScore, sC1BestHandDesc
+    End Sub
+
+    Sub ShowPreFlop()
+        ShowCards "imgPC", sPCard, 0, 1
+        ShowCards "imgC1C", sC1Card, 0, 1
+    End Sub
+
+    Sub Flop()
+        CalcBet 100, 12, 11, 10, 9
+        CommFlop
+        PlayerFlop
+        ComputerFlop
+        ShowFlop
+    End Sub
+
+    Sub CommFlop()
+        DrawCards
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 0, 2
+        Sort iCValue, sCSuit, sCCard, 1, True
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 0, 2
+    End Sub
+
+    Sub PlayerFlop()
+        ClearHandVars
+        MergeCards sPSuit, iPValue, sCSuit, iCValue, 0, 2 
+        Sort iPValue, sPSuit, sPCard, 3, False
+        ClearHandVars
+        CheckHand iPValue, sPSuit, 4, iPBestScore, sPBestHandDesc
+    End Sub
+
+    Sub ComputerFlop()
+        ClearHandVars
+        MergeCards sC1Suit, iC1Value, sCSuit, iCValue, 0, 2 
+        Sort iC1Value, sC1Suit, sC1Card, 3, False
+        ClearHandVars
+        CheckHand iC1Value, sC1Suit, 4, iC1BestScore, sC1BestHandDesc
+    End Sub
+
+    Sub ShowFlop()
+        If bC1Fold = False Then
+            ShowCards "imgCC", sCCard, 0, 2
+        End if
+    End Sub
+
+    Sub Turn()
+        CalcBet 10000, 2000, 800, 200, 20
+        CommTurn
+        PlayerTurn
+        ComputerTurn
+        ShowTurn
+    End Sub
+
+    Sub CommTurn()
+        DrawCards 
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 3, 3
+        Sort iCValue, sCSuit, sCCard, 2, False
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 3, 3
+    End Sub
+
+    Sub PlayerTurn()
+        ClearHandVars
+        MergeCards sPSuit, iPValue, sCSuit, iCValue, 3, 3
+        Sort iPValue, sPSuit, sPCard, 4, False
+        ClearHandVars
+        CompareHands sSixCardCombos, iPValue, sPSuit, 5, iPBestScore, sPBestHandDesc
+    End Sub
+
+    Sub ComputerTurn()
+        ClearHandVars
+        MergeCards sC1Suit, iC1Value, sCSuit, iCValue, 3, 3
+        Sort iC1Value, sC1Suit, sC1Card, 4, False
+        ClearHandVars
+        CompareHands sSixCardCombos, iC1Value, sC1Suit, 5, iC1BestScore, sC1BestHandDesc
+    End Sub
+
+    Sub ShowTurn()
+        If bC1Fold = False Then
+            ShowCards "imgCC", sCCard, 3, 3
+        End If
+    End Sub
+
+    Sub River()
+        CalcBet 10000, 2000, 800, 200, 20
+        CommRiver
+        PlayerRiver
+        ComputerRiver
+        ShowRiver
+    End Sub
+
+    Sub CommRiver()
+        DrawCards
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 4, 4
+        Sort iCValue, sCSuit, sCCard, 3, False
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 4, 4
+    End Sub
+
+    Sub PlayerRiver()
+        ClearHandVars
+        MergeCards sPSuit, iPValue, sCSuit, iCValue, 4, 4
+        Sort iPValue, sPSuit, sPCard, 5, False
+        ClearHandVars
+        CompareHands sSevCardCombos, iPValue, sPSuit, 20, iPBestScore, sPBestHandDesc
+    End Sub
+
+    Sub ComputerRiver()
+        ClearHandVars
+        MergeCards sC1Suit, iC1Value, sCSuit, iCValue, 4, 4
+        Sort iC1Value, sC1Suit, sC1Card, 5, False
+        ClearHandVars
+        CompareHands sSevCardCombos, iC1Value, sC1Suit, 20, iC1BestScore, sC1BestHandDesc
+    End Sub
+
+    Sub ShowRiver()
+        If bC1Fold = False Then
+            ShowCards "imgCC", sCCard, 4, 4
+        End If
+    End Sub
+
+    Sub FinalBet()
+        CalcBet 10000, 2000, 800, 200, 20
+        If bC1Fold = False Then
+            Winner
+            Buttons "Disabled", ""
+        End If
+        If iC1Chips < 1 Then
+            Alert("Congratulations! You win! Play again?")
+            Start
+        ElseIf iPChips < 1 Then
+            Alert("Unlucky! You lose! Play again?")
+            Start
+        End If
+    End Sub
+</script>

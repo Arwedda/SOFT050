@@ -1,0 +1,219 @@
+﻿<html>
+    <head>
+        <title>Hold'Em</title>
+        <meta http-equiv="x-ua-compatible" content="IE=10" /> 
+    </head>
+    <body>
+        <input id='btnDeal' type='button' value='Deal' />
+        <br />
+        <img id='imgCC0' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC1' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC2' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC3' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <img id='imgCC4' src='bk.jpg' height='250' width='200' style='position: absolute;' />
+        <p id='parPHand'></p>
+        <p id='parC1Hand'></p>
+        <p id='parResult'></p>
+        <img id='imgPC0' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+        <img id='imgPC1' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+        <img id='imgC1C0' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+        <img id='imgC1C1' src="bk.jpg" height='250' width='200' style='position: absolute;' />
+    </body>
+</html>
+<script language="vbscript" src="PokerHand.vbs"></script>
+<script language="vbscript">
+Option Explicit
+Dim sDeck
+Dim sSixCardCombos
+Dim sSevCardCombos
+Dim iPair(1)
+Dim sHighcard
+Dim iThreeOfAKind
+Dim bStraight
+Dim bFlush
+Dim iRound
+Dim sHandRes
+Dim iCheckVals(4)
+Dim sCheckSuits(4)
+Dim iCheckScore
+Dim sCheckHandDesc
+
+Dim sCCard(4)
+Dim sCSuit(4)
+Dim iCValue(4)
+Dim iPotChips
+
+Dim iPBestScore
+Dim sPBestHandDesc
+Dim sPCard(1)
+Dim sPSuit(6)
+Dim iPValue(6)
+Dim iPChips
+
+Dim iC1BestScore
+Dim sC1BestHandDesc
+Dim sC1Card(1)
+Dim sC1Suit(6)
+Dim iC1Value(6)
+Dim iC1Chips
+
+    Sub window_Onload()
+        Randomize
+        Initialise
+    End Sub
+
+    Sub btnDeal_onClick()
+        If iRound = 0 Or iRound = 4 Then
+            PreFlop
+        ElseIf iRound = 1 Then
+            Flop
+        ElseIf iRound = 2 Then
+            Turn
+        Else
+            River
+        End If
+        iRound = iRound + 1
+    End Sub
+
+    Sub PreFlop()
+        CommPreFlop
+        PlayerPreFlop
+        ComputerPreFlop
+    End Sub
+
+    Sub CommPreFlop()
+        FreshHand
+        DrawCards
+    End Sub
+
+    Sub PlayerPreFlop()
+        sHandRes = "You have"
+
+        SuitsAndValues iPValue, sPSuit, "imgPC", sPCard, 0, 1
+        Sort iPValue, sPSuit, sPCard, 0, True
+        SuitsAndValues iPValue, sPSuit, "imgPC", sPCard, 0, 1
+        ShowCards "imgPC", sPCard, 0, 1
+        CheckHand iPValue, sPSuit, 1, iPBestScore, sPBestHandDesc
+        ShowBest sCheckHandDesc, parPHand, iPBestScore
+    End Sub
+
+    Sub ComputerPreFlop()
+        sHandRes = "Computer 1 has"
+
+        SuitsAndValues iC1Value, sC1Suit, "imgC1C", sC1Card, 0, 1
+        Sort iC1Value, sC1Suit, sC1Card, 0, True
+        SuitsAndValues iC1Value, sC1Suit, "imgC1C", sC1Card, 0, 1
+        ShowCards "imgC1C", sC1Card, 0, 1
+        CheckHand iC1Value, sC1Suit, 1, iC1BestScore, sC1BestHandDesc
+        ShowBest sCheckHandDesc, parC1Hand, iC1BestScore
+    End Sub
+
+    Sub Flop()
+        CommFlop
+        PlayerFlop
+        ComputerFlop
+    End Sub
+
+    Sub CommFlop()
+        DrawCards
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 0, 2
+        Sort iCValue, sCSuit, sCCard, 1, True
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 0, 2
+        ShowCards "imgCC", sCCard, 0, 2
+    End Sub
+
+    Sub PlayerFlop()
+        sHandRes = "You have"
+
+        ClearHandVars
+        MergeCards sPSuit, iPValue, sCSuit, iCValue, 0, 2 
+        Sort iPValue, sPSuit, sPCard, 3, False
+        ClearHandVars
+        CheckHand iPValue, sPSuit, 4, iPBestScore, sPBestHandDesc
+        ShowBest sCheckHandDesc, parPHand, iPBestScore
+    End Sub
+
+    Sub ComputerFlop()
+        sHandRes = "Computer 1 has"
+
+        ClearHandVars
+        MergeCards sC1Suit, iC1Value, sCSuit, iCValue, 0, 2 
+        Sort iC1Value, sC1Suit, sC1Card, 3, False
+        ClearHandVars
+        CheckHand iC1Value, sC1Suit, 4, iC1BestScore, sC1BestHandDesc
+        ShowBest sCheckHandDesc, parC1Hand, iC1BestScore
+    End Sub
+
+    Sub Turn()
+        CommTurn
+        PlayerTurn
+        ComputerTurn
+    End Sub
+
+    Sub CommTurn()
+        DrawCards 
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 3, 3
+        Sort iCValue, sCSuit, sCCard, 2, False
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 3, 3
+        ShowCards "imgCC", sCCard, 3, 3
+    End Sub
+
+    Sub PlayerTurn()
+        sHandRes = "You have"
+
+        ClearHandVars
+        MergeCards sPSuit, iPValue, sCSuit, iCValue, 3, 3
+        Sort iPValue, sPSuit, sPCard, 4, False
+        ClearHandVars
+        CompareHands sSixCardCombos, iPValue, sPSuit, 5, iPBestScore, sPBestHandDesc
+        ShowBest sPBestHandDesc, parPHand, iPBestScore
+    End Sub
+
+    Sub ComputerTurn()
+        sHandRes = "Computer 1 has"
+
+        ClearHandVars
+        MergeCards sC1Suit, iC1Value, sCSuit, iCValue, 3, 3
+        Sort iC1Value, sC1Suit, sC1Card, 4, False
+        ClearHandVars
+        CompareHands sSixCardCombos, iC1Value, sC1Suit, 5, iC1BestScore, sC1BestHandDesc
+        ShowBest sC1BestHandDesc, parC1Hand, iC1BestScore
+    End Sub
+
+    Sub River()
+        CommRiver
+        PlayerRiver
+        ComputerRiver
+        ShowWinner
+    End Sub
+
+    Sub CommRiver()
+        DrawCards
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 4, 4
+        Sort iCValue, sCSuit, sCCard, 3, False
+        SuitsAndValues iCValue, sCSuit, "imgCC", sCCard, 4, 4
+        ShowCards "imgCC", sCCard, 4, 4
+    End Sub
+
+    Sub PlayerRiver()
+        sHandRes = "You have"
+
+        ClearHandVars
+        MergeCards sPSuit, iPValue, sCSuit, iCValue, 4, 4
+        Sort iPValue, sPSuit, sPCard, 5, False
+        ClearHandVars
+        CompareHands sSevCardCombos, iPValue, sPSuit, 20, iPBestScore, sPBestHandDesc
+        ShowBest sPBestHandDesc, parPHand, iPBestScore
+    End Sub
+
+    Sub ComputerRiver()
+        sHandRes = "Computer 1 has"
+
+        ClearHandVars
+        MergeCards sC1Suit, iC1Value, sCSuit, iCValue, 4, 4
+        Sort iC1Value, sC1Suit, sC1Card, 5, False
+        ClearHandVars
+        CompareHands sSevCardCombos, iC1Value, sC1Suit, 20, iC1BestScore, sC1BestHandDesc
+        ShowBest sC1BestHandDesc, parC1Hand, iC1BestScore
+    End Sub
+</script>
